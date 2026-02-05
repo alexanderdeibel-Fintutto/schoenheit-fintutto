@@ -118,8 +118,13 @@ export const useGoogleMapsAutocomplete = ({
       if (!inputRef.current) return;
 
       try {
-        // Fetch the API key from the edge function
-        const { data, error: fetchError } = await supabase.functions.invoke('google-maps-key');
+        // Fetch the API key from the edge function (requires authentication)
+        const { data: { session } } = await supabase.auth.getSession();
+        const { data, error: fetchError } = await supabase.functions.invoke('google-maps-key', {
+          headers: session?.access_token ? {
+            Authorization: `Bearer ${session.access_token}`
+          } : undefined
+        });
         
         if (fetchError || !data?.apiKey) {
           console.error('Failed to fetch Google Maps API key:', fetchError);
